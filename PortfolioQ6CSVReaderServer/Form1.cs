@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CsvHelper;
@@ -17,7 +18,10 @@ namespace PortfolioQ6CSVReaderServer
     public partial class Form1 : Form
     {
         private Pipe pipeServer = new Pipe();
-        private bool isCSV = false;
+        private bool isGetCSV = false;
+        private bool isWant = false;
+        private bool isWantToGet = false;
+        Thread CSVThread;
         public Form1()
         {
             InitializeComponent();
@@ -25,6 +29,7 @@ namespace PortfolioQ6CSVReaderServer
             pipeServer.ClientDisconnected += pipeServer_ClientDisconnected;
 
             serverStart();
+            
         }
 
         private void pipeServer_ClientDisconnected()
@@ -50,8 +55,19 @@ namespace PortfolioQ6CSVReaderServer
             // bool isCSV = false;
             string str = encoder.GetString(message, 0, message.Length);
 
+            if (str.Equals("kajsdfaeeqr8f47hfqn8va48idf8aifnv8"))
+            {
+                DialogResult dialogResult = MessageBox.Show("Do you want to GET CSV File from Server?", "CSV Reciever", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    writeCSV();
+                }
+                else if (dialogResult == DialogResult.No)
+                {
+                    trashCSV();
+                }
+            }
             textBoxMessages.Text += "Client: " + str + "\r\n";
-
         }
 
         private void writeCSV()
@@ -93,6 +109,11 @@ namespace PortfolioQ6CSVReaderServer
             dataGridView.Columns[4].DisplayIndex = 2;
         }
 
+        private void trashCSV()
+        {
+
+        }
+
         private void buttonSendM_Click(object sender, EventArgs e)
         {
             ASCIIEncoding encoder = new ASCIIEncoding();
@@ -102,43 +123,57 @@ namespace PortfolioQ6CSVReaderServer
             textBoxSend.Clear();
         }
 
+        private void sendCSV(string path)
+        {
+            ASCIIEncoding encoder = new ASCIIEncoding();
+            
+            while (true)
+            {
+                if (isWant)
+                {
+                    byte[] msgBuffer = encoder.GetBytes("CSV Writing Start Now!@#$%^&");
+                    pipeServer.SendMessage(msgBuffer);
+
+                    var streamReader = new StreamReader(path);
+                    var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture);
+
+                    string value;
+                    Console.WriteLine(csvReader.Read());
+                    Console.WriteLine(csvReader.ReadHeader());
+                    //Console.WriteLine(csvReader.ColumnCount);
+                    string[] headers = csvReader.HeaderRecord;
+                    int colCount = headers.Length;
+                    Console.WriteLine("[{0}]", string.Join(", ", headers) + colCount);
+                    while (csvReader.Read())
+                    {
+                        for (int i = 0; csvReader.TryGetField<string>(i, out value); i++)
+                        {
+                            Console.Write($"{value} ");
+                        }
+
+                        Console.WriteLine();
+                    }
+
+                    msgBuffer = encoder.GetBytes("CSV Writing End Now!@#$%^&");
+                    pipeServer.SendMessage(msgBuffer);
+                    isGetCSV = false;
+                }
+            }
+        }
+
         private void buttonSendCSV_Click(object sender, EventArgs e)
         {
             string path = getPathfromDialog();
 
-            var streamReader = new StreamReader(path);
-            var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture);
-            //var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            //config.HasHeaderRecord = true;
-            string value;
-            Console.WriteLine(csvReader.Read());
-            Console.WriteLine(csvReader.ReadHeader());
-            //Console.WriteLine(csvReader.ColumnCount);
-            string[] headers = csvReader.HeaderRecord;
-            int colCount = headers.Length;
-            Console.WriteLine("[{0}]", string.Join(", ", headers) + colCount);
-            while (csvReader.Read())
+            if (path != null)
             {
-                for (int i = 0; csvReader.TryGetField<string>(i, out value); i++)
-                {
-                    Console.Write($"{value} ");
-                }
-
-                Console.WriteLine();
+                ASCIIEncoding encoder = new ASCIIEncoding();
+                byte[] msgBuffer = encoder.GetBytes("kajsdfaeeqr8f47hfqn8va48idf8aifnv8");
+                pipeServer.SendMessage(msgBuffer);
+                isGetCSV = true;
+                CSVThread = new Thread(new ThreadStart(sendCSV(path)));
+                CSVThread.Start();
             }
-
-            //var recods = csvReader.GetRecords<dynamic>();
-            //foreach (dynamic record in recods)
-            //{
-            //    int colCount = Enumerable.Count(record);
-            //    Console.WriteLine(colCount);
-            //    textBoxMessages.Text += colCount;
-            //    for (int i = 0; i < colCount; i++)
-            //    {
-            //        Console.WriteLine($"col {i}: {record[i]} ");
-            //        textBoxMessages.Text += $"col {i}: {record[i].ToString()} ";
-            //    }
-            //}
         }
 
         private string getPathfromDialog()
