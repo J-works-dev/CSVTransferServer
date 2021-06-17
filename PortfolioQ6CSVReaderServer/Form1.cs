@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace PortfolioQ6CSVReaderServer
 {
@@ -49,46 +52,6 @@ namespace PortfolioQ6CSVReaderServer
 
             textBoxMessages.Text += "Client: " + str + "\r\n";
 
-            //if (!isCSV)
-            //{
-            //    string[] clientInfo = str.Split(',');
-            //    string id = clientInfo[0];
-            //    string pw = clientInfo[1];
-
-            //    foreach (User user in users)
-            //    {
-            //        if (user.Id.Equals(id))
-            //        {
-            //            isUser = true;
-            //            if (user.Verify(pw))
-            //            {
-            //                msgBuffer = encoder.GetBytes("logged in");
-            //                pipeServer.SendMessage(msgBuffer);
-            //                isLogin = true;
-            //            }
-            //            else
-            //            {
-            //                msgBuffer = encoder.GetBytes("Wrong Password");
-            //                pipeServer.SendMessage(msgBuffer);
-            //            }
-            //        }
-            //    }
-
-            //    if (!isUser) // [users.Count - 1]
-            //    {
-            //        msgBuffer = encoder.GetBytes("No User found");
-            //        pipeServer.SendMessage(msgBuffer);
-            //    }
-            //}
-            //else
-            //{
-            //    if (str == "Disconnect")
-            //    {
-            //        isLogin = false;
-            //        isUser = false;
-            //    }
-            //    textBoxReceived.Text += "Client: " + str + "\r\n";
-            //}
         }
 
         private void writeCSV()
@@ -141,6 +104,45 @@ namespace PortfolioQ6CSVReaderServer
 
         private void buttonSendCSV_Click(object sender, EventArgs e)
         {
+            string path = getPathfromDialog();
+
+            var streamReader = new StreamReader(path);
+            var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture);
+            //var config = new CsvConfiguration(CultureInfo.InvariantCulture);
+            //config.HasHeaderRecord = true;
+            string value;
+            Console.WriteLine(csvReader.Read());
+            Console.WriteLine(csvReader.ReadHeader());
+            //Console.WriteLine(csvReader.ColumnCount);
+            string[] headers = csvReader.HeaderRecord;
+            int colCount = headers.Length;
+            Console.WriteLine("[{0}]", string.Join(", ", headers) + colCount);
+            while (csvReader.Read())
+            {
+                for (int i = 0; csvReader.TryGetField<string>(i, out value); i++)
+                {
+                    Console.Write($"{value} ");
+                }
+
+                Console.WriteLine();
+            }
+
+            //var recods = csvReader.GetRecords<dynamic>();
+            //foreach (dynamic record in recods)
+            //{
+            //    int colCount = Enumerable.Count(record);
+            //    Console.WriteLine(colCount);
+            //    textBoxMessages.Text += colCount;
+            //    for (int i = 0; i < colCount; i++)
+            //    {
+            //        Console.WriteLine($"col {i}: {record[i]} ");
+            //        textBoxMessages.Text += $"col {i}: {record[i].ToString()} ";
+            //    }
+            //}
+        }
+
+        private string getPathfromDialog()
+        {
             openFileDialog.InitialDirectory = @"D:\";
             openFileDialog.Title = "Browse Text Files";
             openFileDialog.CheckFileExists = true;
@@ -152,7 +154,11 @@ namespace PortfolioQ6CSVReaderServer
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                textBoxCSV.Text = openFileDialog.FileName;
+                return openFileDialog.FileName;
+            }
+            else
+            {
+                return null;
             }
         }
 
@@ -166,7 +172,7 @@ namespace PortfolioQ6CSVReaderServer
             if (!pipeServer.Running)
             {
                 pipeServer.Start(textBoxPipeName.Text);
-                statusLabel.Text = "Admin Logged in";
+                statusLabel.Text = "Server Started.";
             }
             else
             {
