@@ -43,6 +43,7 @@ namespace PortfolioQ6CSVReaderServer
             this.buttonSendM = new System.Windows.Forms.Button();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.groupBoxCSV.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -182,6 +183,10 @@ namespace PortfolioQ6CSVReaderServer
             this.statusLabel.Size = new System.Drawing.Size(49, 20);
             this.statusLabel.Text = "Status";
             // 
+            // openFileDialog
+            // 
+            this.openFileDialog.FileName = "openFileDialog";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -225,6 +230,7 @@ namespace PortfolioQ6CSVReaderServer
         private System.Windows.Forms.Button buttonSendM;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
+        private System.Windows.Forms.OpenFileDialog openFileDialog;
     }
 }
 

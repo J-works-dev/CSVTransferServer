@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CsvHelper;
 
 namespace PortfolioQ6CSVReaderServer
 {
@@ -140,7 +141,19 @@ namespace PortfolioQ6CSVReaderServer
 
         private void buttonSendCSV_Click(object sender, EventArgs e)
         {
-            writeCSV();
+            openFileDialog.InitialDirectory = @"D:\";
+            openFileDialog.Title = "Browse Text Files";
+            openFileDialog.CheckFileExists = true;
+            openFileDialog.CheckPathExists = true;
+            openFileDialog.DefaultExt = "csv";
+            openFileDialog.RestoreDirectory = true;
+            openFileDialog.ReadOnlyChecked = true;
+            openFileDialog.ShowReadOnly = true;
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                textBoxCSV.Text = openFileDialog.FileName;
+            }
         }
 
         private void buttonSaveCSV_Click(object sender, EventArgs e)
